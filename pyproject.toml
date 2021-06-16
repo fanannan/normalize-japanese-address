@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "normalize-japanese-address"
+version = "0.1.0"
+authors = ["sawada takahiro <saw@computer.org>"]
+
+#description = "短い説明文"
+license = "ライセンス名"
+homepage = "ホームページURL"
+repository = "ソースレポジトリURL"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+kanjize = "^1.0.0"
+mojimoji = "^0.0.11"
+requests = "^2.25.1"
+pytest = "^6.2.4"
+neologdn = "^0.5.1"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
