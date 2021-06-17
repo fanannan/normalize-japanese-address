@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "normalize-japanese-address"
+name = "normalize_japanese_address"
 version = "0.0.1"
 authors = ["SAWADA takahiro <saw@computer.org>"]
-description = "短い説明文"
-license = "ライセンス名"
-homepage = "ホームページURL"
-repository = "ソースレポジトリURL"
+description = "To normalize Japanese address."
+license = "MIT"
+homepage = "https://github.com/fanannan/normalize-japanese-address"
+repository = "https://github.com/fanannan/normalize-japanese-address"
 readme = "README.md"
 
 [tool.poetry.dependencies]

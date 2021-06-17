@@ -5,7 +5,7 @@ from typing import Callable, Final, List, Tuple, Union
 import unicodedata
 #
 from .zen2han import zen2han
-from .const import HYPHNES, NUMS, NUMS_WO_MARU, NUMS_W_ZEN
+from .const import HYPHNES, NUMS_WO_MARU, NUMS_W_ZEN
 
 # JIS 第2水準 => 第1水準 及び 旧字体 => 新字体
 JIS_OLD_KANJI: Final[List[str]] = \
@@ -72,7 +72,7 @@ def rep(s: str, search_pattern: str, replacee: str, replacement: Union[str, Call
         else:
             mm = re.search(replacee, m.group())
             for scan, new in mm.groups():
-                mx = []
+                mx = []  # to revert
         matches = mx+matches
     #
     t: str = s[:]
