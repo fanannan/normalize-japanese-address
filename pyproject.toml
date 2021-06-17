@@ -1,9 +1,8 @@
 [tool.poetry]
 name = "normalize-japanese-address"
-version = "0.1.0"
-authors = ["sawada takahiro <saw@computer.org>"]
-
-#description = "短い説明文"
+version = "0.0.1"
+authors = ["SAWADA takahiro <saw@computer.org>"]
+description = "短い説明文"
 license = "ライセンス名"
 homepage = "ホームページURL"
 repository = "ソースレポジトリURL"

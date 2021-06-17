@@ -5,6 +5,7 @@ from typing import Callable, Final, List, Tuple, Union
 import unicodedata
 #
 from .zen2han import zen2han
+from .const import HYPHNES, NUMS, NUMS_WO_MARU, NUMS_W_ZEN
 
 # JIS 第2水準 => 第1水準 及び 旧字体 => 新字体
 JIS_OLD_KANJI: Final[List[str]] = \
@@ -80,67 +81,6 @@ def rep(s: str, search_pattern: str, replacee: str, replacement: Union[str, Call
     return t
 
 
-# 本関数の出典
-# https://github.com/neologd/mecab-ipadic-neologd/wiki/Regexp.ja
-def unicode_normalize(cls, s):
-    pt = re.compile('([{}]+)'.format(cls))
-
-    def norm(c):
-        return unicodedata.normalize('NFKC', c) if pt.match(c) else c
-
-    s = ''.join(norm(x) for x in re.split(pt, s))
-    s = re.sub('－', '-', s)
-    return s
-
-
-# 本関数の出典
-# https://github.com/neologd/mecab-ipadic-neologd/wiki/Regexp.ja
-def remove_extra_spaces(s: str, remove_spaces_inbetween: bool) -> str:
-    s = re.sub('[ 　]+', ' ', s)
-    blocks = ''.join(('\u4E00-\u9FFF',  # CJK UNIFIED IDEOGRAPHS
-                      '\u3040-\u309F',  # HIRAGANA
-                      '\u30A0-\u30FF',  # KATAKANA
-                      '\u3000-\u303F',  # CJK SYMBOLS AND PUNCTUATION
-                      '\uFF00-\uFFEF'   # HALFWIDTH AND FULLWIDTH FORMS
-                      ))
-    basic_latin = '\u0000-\u007F'
-
-    def remove_space_between(cls1, cls2, s):
-        p = re.compile('([{}]) ([{}])'.format(cls1, cls2))
-        while p.search(s):
-            s = p.sub(r'\1\2', s)
-        return s
-
-    if remove_spaces_inbetween:
-        s = remove_space_between(blocks, blocks, s)
-        s = remove_space_between(blocks, basic_latin, s)
-        s = remove_space_between(basic_latin, blocks, s)
-    return s
-
-
-# 本関数の出典
-# https://github.com/neologd/mecab-ipadic-neologd/wiki/Regexp.ja
-def normalize_neologd(s: str, remove_spaces_inbetween:bool=False) -> str:
-    s = s.strip()
-    s = unicode_normalize('０-９Ａ-Ｚａ-ｚ｡-ﾟ', s)
-
-    def maketrans(f, t):
-        return {ord(x): ord(y) for x, y in zip(f, t)}
-
-    s = re.sub('[˗֊‐‑‒–⁃⁻₋−]+', '-', s)  # normalize hyphens
-    s = re.sub('[﹣－ｰ—―─━ー]+', 'ー', s)  # normalize choonpus
-    s = re.sub('[~∼∾〜〰～]', '', s)  # remove tildes
-    s = s.translate(
-        maketrans('!"#$%&\'()*+,-./:;<=>?@[¥]^_`{|}~｡､･｢｣',
-              '！”＃＄％＆’（）＊＋，－．／：；＜＝＞？＠［￥］＾＿｀｛｜｝〜。、・「」'))
-
-    s = remove_extra_spaces(s, remove_spaces_inbetween=remove_spaces_inbetween)
-    s = unicode_normalize('！”＃＄％＆’（）＊＋，－．／：；＜＞？＠［￥］＾＿｀｛｜｝〜', s)  # keep ＝,・,「,」
-    s = re.sub('[’]', '\'', s)
-    s = re.sub('[”]', '"', s)
-    return s
-
-
 def preprocess(address: str):
     # 入力された住所に対して以下の正規化を予め行う。
     # 1. `1-2-3` や `四-五-六` のようなフォーマットのハイフンを半角に統一。
@@ -149,17 +89,11 @@ def preprocess(address: str):
     addr: str = unicodedata.normalize('NFKC', address).replace('　', ' ').replace(' +', ' ')
     # 全角のアラビア数字[０-９Ａ-Ｚａ-ｚ]+は問答無用で半角にする
     addr = zen2han(addr)
-    addr = rep(addr,
-               "([0-9０-９一二三四五六七八九〇十百千][-－﹣−‐⁃‑‒–—﹘―⎯⏤ーｰ─━])|([-－﹣−‐⁃‑‒–—﹘―⎯⏤ーｰ─━])[0-9０-９一二三四五六七八九〇十]",
-               "/[-－﹣−‐⁃‑‒–—﹘―⎯⏤ーｰ─━]", '-')
+    addr = re.sub(f"({NUMS_W_ZEN}{HYPHNES})|({HYPHNES}){NUMS_W_ZEN}", lambda x: re.sub(HYPHNES, '-', x.group()), addr)
     # 町丁目名以前のスペースはすべて削除
-    addr = rep(addr,
-               "(.+)(丁目?|番(町|地|丁)|条|軒|線|(の|ノ)町|地割)",
-               " ", '')
+    addr = re.sub("(.+)(丁目?|番(町|地|丁)|条|軒|線|(の|ノ)町|地割)", lambda x: x.group().replace(" ", ''), addr)
     # 1番はじめに出てくるアラビア数字以前のスペースを削除
-    addr = rep(addr,
-               ".+?[0-9一二三四五六七八九〇十百千]-",
-               " ", '')
+    addr = re.sub(f".+?{NUMS_WO_MARU}-", lambda x: x.group().replace(" ", ''), addr)
     return addr
 
 

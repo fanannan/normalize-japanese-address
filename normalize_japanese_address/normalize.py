@@ -2,16 +2,16 @@
 # -*- coding: utf-8 -*-
 import re
 from typing import Dict, Optional, Tuple, Union
-import unicodedata
 
-from .cacheRegexes import estimatePref, getCity, getPrefectures, normalizePref, normalizeTownName
+
+from .lib.cacheRegexes import estimatePref, getCity, getPrefectures, normalizePref, normalizeTownName
 #
-from .config import Config, DEFAULT_CONFIG, DEFAULT_OPTION, Option
-from .const import ADDRESS, CITY, LEVEL, PREF, TOWN
-from .dict import preprocess
-from .kan2num import kan2num
-from .num2kan import num2kanji
-from .patch_addr import patch_address
+from .lib.config import Config, DEFAULT_CONFIG, DEFAULT_OPTION, Option
+from .lib.const import ADDRESS, CITY, LEVEL, PREF, TOWN, HYPHNES, NUMS
+from .lib.dict import preprocess
+from .lib.kan2num import kan2num
+from .lib.num2kan import num2kanji
+from .lib.patch_addr import patch_address
 
 
 def normalize(
@@ -53,16 +53,16 @@ def normalize(
     # addr = re.sub("([0-9]+)丁目", lambda m: num2kanji(int(m.groups()[0])), addr) #kan2numでもんだがあるので一時退避
     addr = re.sub("([0-9]+)丁目", lambda m: str(int(m.groups()[0])), addr)
 
-    NUMS: str = '[0-9〇一二三四五六七八九十百千]+'
+
     #   /(([0-9〇一二三四五六七八九十百千]+)(番地?)([0-9〇一二三四五六七八九十百千]+)号)\s*(.+)/, '$1 $5',
     #   /([0-9〇一二三四五六七八九十百千]+)(番地?)([0-9〇一二三四五六七八九十百千]+)号?/, '$1-$3',
     #   /([0-9〇一二三四五六七八九十百千]+)番地?/, '$1')
     #   /([0-9〇一二三四五六七八九十百千]+)の/g, '$1-')
     BANCHI_PATTERNS = (
-            (f'(({NUMS})(番地?)({NUMS})号)\\s*(.+)', r'\1 \5'),
-            (f'({NUMS})(番地?)({NUMS})号?', r'\1-\3'),
-            (f'({NUMS})番地?', r'\1'),
-            (f'({NUMS})の', r'\1-'))
+            (f'(({NUMS}+)(番地?)({NUMS}+)号)\\s*(.+)', r'\1 \5'),
+            (f'({NUMS}+)(番地?)({NUMS}+)号?', r'\1-\3'),
+            (f'({NUMS}+)番地?', r'\1'),
+            (f'({NUMS}+)の', r'\1-'))
     for p, r in BANCHI_PATTERNS:
         addr = re.sub(p, r, addr)
 
@@ -79,11 +79,10 @@ def normalize(
     #       return kan2num(match).replace(/[-－﹣−‐⁃‑‒–—﹘―⎯⏤ーｰ─━]/g, '-')
     #     },
     #   )
-    HYPHNES: str = '[-－﹣−‐⁃‑‒–—﹘―⎯⏤ーｰ─━]'
     f = lambda x: re.sub(HYPHNES, '-', x.group())
     # f = lambda x: re.sub(HYPHNES, '-', kan2num(x.group()))  #kan2numでもんだがあるので一時退避
     # _ = addr
-    for p in [f'({NUMS}){HYPHNES}', f'{HYPHNES}({NUMS})']:
+    for p in [f'({NUMS}+){HYPHNES}', f'{HYPHNES}({NUMS}+)']:
         addr = re.sub(p, f, addr)
         # if _ != addr:
         #     print(_, addr)
@@ -92,10 +91,10 @@ def normalize(
 
 
     BANCHI_PATTERNS2 = (
-            f'({NUMS})-',  # `1-` のようなケース
-            f'-({NUMS})',  # `-1` のようなケース
-            f'-[^0-9]+({NUMS})',  # `-あ1` のようなケース
-            f'({NUMS})$',)  # `串本町串本１２３４` のようなケース
+            f'({NUMS}+)-',  # `1-` のようなケース
+            f'-({NUMS}+)',  # `-1` のようなケース
+            f'-[^0-9]+({NUMS}+)',  # `-あ1` のようなケース
+            f'({NUMS}+)$',)  # `串本町串本１２３４` のようなケース
     for p in BANCHI_PATTERNS2:
         # x = addr
         addr = re.sub(p, lambda x: x.group().replace(x.groups()[0], str(kan2num(x.groups()[0]))), addr)

@@ -2,11 +2,10 @@
 # -*- coding: utf-8 -*-
 from typing import Dict, List, Tuple
 
-from lib.const import ADDRESS, CITY, LEVEL, PREF, TOWN
+from ..lib.const import ADDRESS, CITY, LEVEL, PREF, TOWN
 #
-from lib.normalize import normalize
-from lib.dict import normalize_neologd
-
+from ..normalize import normalize
+from neologdn import normalize as normalize_neologd
 
 TEST_PATTERNS: List[Tuple[str, Dict[str, str]]] = [
         ('大阪府堺市北区新金岡町4丁1−8', {PREF: "大阪府", CITY: "堺市北区", TOWN: "新金岡町四丁", ADDRESS: "1-8", LEVEL: 3}),
@@ -165,32 +164,10 @@ TEST_PATTERNS: List[Tuple[str, Dict[str, str]]] = [
 
 
 def test_normalize_nelogod():
-    assert "0123456789" == normalize_neologd("０１２３４５６７８９")
-    assert "ABCDEFGHIJKLMNOPQRSTUVWXYZ" == normalize_neologd("ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ")
-    assert "abcdefghijklmnopqrstuvwxyz" == normalize_neologd("ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ")
-    assert "!\"#$%&'()*+,-./:;<>?@[¥]^_`{|}" == normalize_neologd("！”＃＄％＆’（）＊＋，－．／：；＜＞？＠［￥］＾＿｀｛｜｝")
-    assert "＝。、・「」" == normalize_neologd("＝。、・「」")
-    assert "ハンカク" == normalize_neologd("ﾊﾝｶｸ")
-    assert "o-o" == normalize_neologd("o₋o")
-    assert "majikaー" == normalize_neologd("majika━")
-    assert "わい" == normalize_neologd("わ〰い")
-    assert "スーパー" == normalize_neologd("スーパーーーー")
-    assert "!#" == normalize_neologd("!#")
-    assert "ゼンカク スペース" == normalize_neologd("ゼンカク　スペース", remove_spaces_inbetween=False)
-    assert "ゼンカクスペース" == normalize_neologd("ゼンカク　スペース", remove_spaces_inbetween=True)
-    assert "おお" == normalize_neologd("お             お", remove_spaces_inbetween=True)
-    assert "おお" == normalize_neologd("      おお")
-    assert "おお" == normalize_neologd("おお      ")
-    assert "検索エンジン自作入門を買いました!!!" == \
-        normalize_neologd("検索 エンジン 自作 入門 を 買い ました!!!", remove_spaces_inbetween=True)
-    assert "アルゴリズムC" == normalize_neologd("アルゴリズム C", remove_spaces_inbetween=True)
-    assert "アルゴリズム C" == normalize_neologd("アルゴリズム C", remove_spaces_inbetween=False)
-    assert "PRML副読本" == normalize_neologd("　　　ＰＲＭＬ　　副　読　本　　　", remove_spaces_inbetween=True)
-    assert "Coding the Matrix" == normalize_neologd("Coding the Matrix")
-    assert "南アルプスの天然水Sparking Lemonレモン一絞り" == \
-        normalize_neologd("南アルプスの　天然水　Ｓｐａｒｋｉｎｇ　Ｌｅｍｏｎ　レモン一絞り", remove_spaces_inbetween=True)
-    assert "南アルプスの天然水-Sparking*Lemon+レモン一絞り" == \
-        normalize_neologd("南アルプスの　天然水-　Ｓｐａｒｋｉｎｇ*　Ｌｅｍｏｎ+　レモン一絞り", remove_spaces_inbetween=True)
+     assert "-" == normalize_neologd("－")
+     assert "＝。、・「」" == normalize_neologd("＝。、・「」")
+     assert "南アルプスの天然水-Sparking*Lemon+レモン一絞り" == \
+        normalize_neologd("南アルプスの　天然水-　Ｓｐａｒｋｉｎｇ*　Ｌｅｍｏｎ+　レモン一絞り", remove_space=True)
 
 
 def test_normalize_japanese_address(patterns: List[Tuple[str, Dict[str, str]]] = TEST_PATTERNS) -> None:
@@ -206,28 +183,31 @@ def test_normalize_japanese_address(patterns: List[Tuple[str, Dict[str, str]]] =
         # print(i+1, p)
         answer: Dict[str, str] = normalize(raw)
         count += 1
+        error_flag = 0
         if answer != expected:
             print(f'#{i+1:04} test failed: {raw}')
             r: List[str] = list()
             for k in [PREF, CITY, TOWN, ADDRESS]:
                 if answer[k] != expected[k]:
-                    errors += 1
+                    error_flag = True
                     r.append(f'{k}:{expected[k]} ({answer[k]})')
+            if error_flag:
+                errors += 1
             print(f'                   {r}')
     ratio: float = errors/float(count)
     print(f'total num errors: {errors}/{count} ({ratio:.1%})')
 
 
 if __name__ == '__main__':
-    from lib.config import DEFAULT_CONFIG
-    from lib.cacheRegexes import getPrefectures, getCity, normalizePref
-    from lib.dict import rep
+    from ..lib.config import DEFAULT_CONFIG
+    from ..lib.cacheRegexes import getPrefectures, getCity, normalizePref
+    from ..lib.dict import rep
 
     prefs: Dict[str, Tuple[str, ...]] = getPrefectures(DEFAULT_CONFIG)
-    assert 'ads百千--二dad' == rep('ads百千ｰ－二dad',
-                                "([0-9０-９一二三四五六七八九〇十百千][-－﹣−‐⁃‑‒–—﹘―⎯⏤ーｰ─━])|([-－﹣−‐⁃‑‒–—﹘―⎯⏤ーｰ─━])[0-9０-９一二三四五六七八九〇十]",
-                                "[-－﹣−‐⁃‑‒–—﹘―⎯⏤ーｰ─━]",
-                                '-')
+    # assert 'ads百千--二dad' == rep('ads百千ｰ－二dad',
+    #                             "([0-9０-９一二三四五六七八九〇十百千][-－﹣−‐⁃‑‒–—﹘―⎯⏤ーｰ─━])|([-－﹣−‐⁃‑‒–—﹘―⎯⏤ーｰ─━])[0-9０-９一二三四五六七八九〇十]",
+    #                             "[-－﹣−‐⁃‑‒–—﹘―⎯⏤ーｰ─━]",
+    #                             '-')
     assert ('東京都', '新宿') == normalizePref(prefs, '東京新宿')
     assert ('港区', '六本木546') == getCity(prefs, '東京都', '港区六本木546')
     assert ('西多摩郡奥多摩町', '12345') == getCity(prefs, '東京都', '奥多摩町12345')
