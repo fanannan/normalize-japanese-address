@@ -14,6 +14,13 @@ from .lib.num2kan import num2kanji
 from .lib.patch_addr import patch_address
 
 
+# def test_normalize_nelogod():
+#      assert "-" == normalize_neologd("－")
+#      assert "＝。、・「」" == normalize_neologd("＝。、・「」")
+#      assert "南アルプスの天然水-Sparking*Lemon+レモン一絞り" == \
+#         normalize_neologd("南アルプスの　天然水-　Ｓｐａｒｋｉｎｇ*　Ｌｅｍｏｎ+　レモン一絞り", remove_space=True)
+
+
 def normalize(
         address: str,
         config: Config = DEFAULT_CONFIG,

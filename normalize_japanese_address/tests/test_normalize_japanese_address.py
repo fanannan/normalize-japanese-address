@@ -3,9 +3,8 @@
 from typing import Dict, List, Tuple
 
 from ..lib.const import ADDRESS, CITY, LEVEL, PREF, TOWN
-#
 from ..normalize import normalize
-from neologdn import normalize as normalize_neologd
+
 
 TEST_PATTERNS: List[Tuple[str, Dict[str, str]]] = [
         ('大阪府堺市北区新金岡町4丁1−8', {PREF: "大阪府", CITY: "堺市北区", TOWN: "新金岡町四丁", ADDRESS: "1-8", LEVEL: 3}),
@@ -163,13 +162,6 @@ TEST_PATTERNS: List[Tuple[str, Dict[str, str]]] = [
         ]
 
 
-def test_normalize_nelogod():
-     assert "-" == normalize_neologd("－")
-     assert "＝。、・「」" == normalize_neologd("＝。、・「」")
-     assert "南アルプスの天然水-Sparking*Lemon+レモン一絞り" == \
-        normalize_neologd("南アルプスの　天然水-　Ｓｐａｒｋｉｎｇ*　Ｌｅｍｏｎ+　レモン一絞り", remove_space=True)
-
-
 def test_normalize_japanese_address(patterns: List[Tuple[str, Dict[str, str]]] = TEST_PATTERNS) -> None:
     count: int = 0
     errors: int = 0
@@ -199,17 +191,4 @@ def test_normalize_japanese_address(patterns: List[Tuple[str, Dict[str, str]]] =
 
 
 if __name__ == '__main__':
-    from ..lib.config import DEFAULT_CONFIG
-    from ..lib.cacheRegexes import getPrefectures, getCity, normalizePref
-    from ..lib.dict import rep
-
-    prefs: Dict[str, Tuple[str, ...]] = getPrefectures(DEFAULT_CONFIG)
-    # assert 'ads百千--二dad' == rep('ads百千ｰ－二dad',
-    #                             "([0-9０-９一二三四五六七八九〇十百千][-－﹣−‐⁃‑‒–—﹘―⎯⏤ーｰ─━])|([-－﹣−‐⁃‑‒–—﹘―⎯⏤ーｰ─━])[0-9０-９一二三四五六七八九〇十]",
-    #                             "[-－﹣−‐⁃‑‒–—﹘―⎯⏤ーｰ─━]",
-    #                             '-')
-    assert ('東京都', '新宿') == normalizePref(prefs, '東京新宿')
-    assert ('港区', '六本木546') == getCity(prefs, '東京都', '港区六本木546')
-    assert ('西多摩郡奥多摩町', '12345') == getCity(prefs, '東京都', '奥多摩町12345')
-    test_normalize_nelogod()
     test_normalize_japanese_address()

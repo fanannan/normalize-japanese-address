@@ -5,6 +5,7 @@ import re
 
 from .const import CITY, PATTERN, PREF, RESULT, TOWN
 
+
 ADDRESS_PATCHES: List[Dict[str, str]] = [
         {
                 PREF:    '香川県',
