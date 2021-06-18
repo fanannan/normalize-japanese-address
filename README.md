@@ -1,15 +1,22 @@
-# @geolonia/normalize-japanese-addresses
 
-https://github.com/fanannan/normalize-japanese-addresses/
-
-Geolonia様のオープンソースの住所正規化ライブラリ(https://github.com/geolonia/normalize-japanese-addresses)をPythonに移植したものです。
+Geolonia様のオープンソースの住所正規化ライブラリ( https://github.com/geolonia/normalize-japanese-addresses )をPythonに移植したものです。
 現在まだ試作段階であり、Geolonia様のもとのライブラリと完全に同じ動作にはなっていません（テストのうち7.2%で失敗）。
 
 ## インストール方法
 
-PyPIにはまだ登録していませんので、下記で登録してください(normalize_japanese_address-0.0.1-py3-none-any.whl はdistディレクトリの下にあります)。
+- Windows環境の場合は、インストールの前に環境変数を設定してください
+```
+set PYTHONUTF8=1
+```
 
-pip install normalize_japanese_address-0.0.1-py3-none-any.whl   
+PyPIにはまだ登録していませんので、下記で登録してください(normalize_japanese_address-0.0.1-py3-none-any.whl はdistディレクトリの下にあります)。
+```
+pip install --upgrade normalize_japanese_address-0.0.4-py3-none-any.whl  
+```
+または
+```
+pip install --upgrade --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple normalize_japanese_address
+```
 
 ## 使い方
 ```python

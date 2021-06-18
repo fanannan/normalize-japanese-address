@@ -19,7 +19,7 @@ logger = getLogger(__name__)
 
 
 def read_json(path: str):
-    with open(path) as f:
+    with open(path, encoding='utf-8') as f:
         return orjson.loads(f.read())
 
 
