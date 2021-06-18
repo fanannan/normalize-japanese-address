@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "normalize_japanese_address"
-version = "0.0.4"
+version = "0.0.5"
 authors = ["SAWADA takahiro <saw@computer.org>"]
 description = "To normalize Japanese address."
 license = "MIT"
