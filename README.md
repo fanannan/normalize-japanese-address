@@ -1,6 +1,7 @@
 
 Geolonia様のオープンソースの住所正規化ライブラリ( https://github.com/geolonia/normalize-japanese-addresses )をPythonに移植したものです。
 現在まだ試作段階であり、Geolonia様のもとのライブラリと完全に同じ動作にはなっていません（テストのうち7.2%で失敗）。
+また、仕様はすぐに変更する可能性があります。
 
 ## インストール方法
 
@@ -9,14 +10,8 @@ Geolonia様のオープンソースの住所正規化ライブラリ( https://gi
 set PYTHONUTF8=1
 ```
 
-PyPIにはまだ登録していませんので、下記で登録してください(normalize_japanese_address-0.0.1-py3-none-any.whl はdistディレクトリの下にあります)。
 ```
-poetry build
-pip install --upgrade ./dist/normalize_japanese_address-X.Y.Z-py3-none-any.whl  
-```
-または
-```
-pip install --upgrade --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple normalize_japanese_address
+pip install --upgrade normalize_japanese_address
 ```
 
 ## 使い方
