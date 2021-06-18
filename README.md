@@ -11,7 +11,8 @@ set PYTHONUTF8=1
 
 PyPIにはまだ登録していませんので、下記で登録してください(normalize_japanese_address-0.0.1-py3-none-any.whl はdistディレクトリの下にあります)。
 ```
-pip install --upgrade normalize_japanese_address-0.0.4-py3-none-any.whl  
+poetry build
+pip install --upgrade ./dist/normalize_japanese_address-X.Y.Z-py3-none-any.whl  
 ```
 または
 ```
