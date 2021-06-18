@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "normalize_japanese_address"
-version = "0.0.5"
+version = "0.0.6"
 authors = ["SAWADA takahiro <saw@computer.org>"]
 description = "To normalize Japanese address."
 license = "MIT"
@@ -9,7 +9,7 @@ repository = "https://github.com/fanannan/normalize-japanese-address"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.8"
 kanjize = "^1.0.0"
 mojimoji = "^0.0.11"
 requests = "^2.25.1"
