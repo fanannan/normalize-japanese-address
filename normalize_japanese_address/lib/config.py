@@ -8,15 +8,16 @@ from .const import API_URL
 
 @dataclasses.dataclass(frozen=True)
 class Config():
-    use_api: bool
     japaneseAddressesApi: str = API_URL
     api_data_path: str = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'japanese_address/api')
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Option():
     level: int
+    is_exact: bool
+    use_api: bool
 
 
-DEFAULT_CONFIG: Config = Config(use_api=False)
-DEFAULT_OPTION: Option = Option(level=3, )
+DEFAULT_CONFIG: Config = Config()
+DEFAULT_OPTION: Option = Option(level=3, is_exact=True, use_api=False)

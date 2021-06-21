@@ -9,9 +9,9 @@ import orjson
 import os
 from logging import getLogger
 #
-from .config import Config
+from .config import Config, Option
 from .const import ADDRESS, CITY, PREF, KANSUJI_W_TEN, HYPHNES, BASE_JSON_FILE
-from .dict import toRegex
+from .dict import toRegex, jisKanji
 #
 from .kan2num import kan2num
 
@@ -24,13 +24,14 @@ def read_json(path: str):
 
 
 @lru_cache
-def getPrefectures(config: Config) -> Dict[str, Tuple[str, ...]]:
-    if config.use_api:
+def getPrefectures(config: Config, option: Option) -> Dict[str, Tuple[str, ...]]:
+    if option.use_api:
         response = requests.get(config.japaneseAddressesApi+BASE_JSON_FILE).json()
     else:
         response = read_json(os.path.join(config.api_data_path, BASE_JSON_FILE))
     d: Dict[str, List[str]] = response
-    prefectures: Dict[str, Tuple[str, ...]] = {k: tuple(v) for k, v in d.items()}
+    prefectures: Dict[str, Tuple[str, ...]] = {k: tuple(v if option.is_exact else [jisKanji(s, False) for s in v])
+                                               for k, v in d.items()}
     return prefectures
 
 
@@ -39,13 +40,19 @@ def getPrefectureRegexes(prefs: Iterable[str]) -> Tuple[Tuple[str, str,]]:
     # `東京` の様に末尾の `都府県` が抜けた住所に対応
     def make_regex(p: str):
         q = re.sub('(都|道|府|県)$', '', p)
-        return f'{q}(都|道|府|県)*'  # ^を外し*を追加
+        if q == '東京':
+            return f'{q}都?'
+        elif q == '北海':
+            return f'{q}道?'
+        elif q in ['京都', '大阪']:
+            return f'{q}府?'
+        return f'{q}県?'
 
     return tuple([(pref, make_regex(pref)) for pref in prefs])
 
 
-@lru_cache
-def getCityRegexes(cities: Iterable[str]) -> Tuple[Tuple[str, str,], ...]:
+@lru_cache(maxsize=None)
+def getCityRegexes(cities: Iterable[str], option: Option) -> Tuple[Tuple[str, str,], ...]:
     # 郡が省略された住所に対応
     def make_regex(p: str) -> str:
         m = re.search('(町|村)$', p)
@@ -57,12 +64,12 @@ def getCityRegexes(cities: Iterable[str]) -> Tuple[Tuple[str, str,], ...]:
 
     # 少ない文字数の地名に対してミスマッチしないように文字の長さ順にソート
     cities = sorted(cities, key=lambda x: len(x), reverse=True)
-    return tuple([(city, toRegex(make_regex(city))) for city in cities])
+    return tuple([(city, toRegex(make_regex(city), option.is_exact)) for city in cities])
 
 
-@lru_cache
-def getTowns(pref: str, city: str, config: Config) -> List[str]:
-    if config.use_api:
+@lru_cache(maxsize=None)
+def getTowns(pref: str, city: str, config: Config, option: Option) -> List[str]:
+    if option.use_api:
         encoded_pref: str = urllib.parse.quote(pref)
         encoded_city: str = urllib.parse.quote(city)
         url: str = f'{config.japaneseAddressesApi}/ja/{encoded_pref}/{encoded_city}.json'
@@ -74,16 +81,16 @@ def getTowns(pref: str, city: str, config: Config) -> List[str]:
         else:
             response = {}
             logger.info(f'{pref}{city}のデータファイルがありません({file_path})')
-    towns: List[str] = response
+    towns: List[str] = response if option.is_exact else [jisKanji(r, is_exact=False) for r in response]
     return towns
 
 
-@lru_cache
-def getTownRegexes(pref: str, city: str, config: Config) -> Tuple[Tuple[str, str,], ...]:
+@lru_cache(maxsize=None)
+def getTownRegexes(pref: str, city: str, config: Config, option: Option) -> Tuple[Tuple[str, str,], ...]:
     # 少ない文字数の地名に対してミスマッチしないように文字の長さ順にソート
-    towns = getTowns(pref, city, config)
+    towns = getTowns(pref, city, config, option)
     towns = sorted(towns, key=lambda x: len(x), reverse=True)
-    return tuple([(town, toRegex(make_town_regex(city, town))) for town in towns])
+    return tuple([(town, toRegex(make_town_regex(city, town), option.is_exact)) for town in towns])
 
 
 def make_town_regex(city: str, town: str) -> str:
@@ -115,7 +122,7 @@ def make_regexes(m: re.Match):
 
 # 地名照合
 def match_regexes(regexes: Iterable[Tuple[str, str,]], addr: str) -> Tuple[Optional[str], str]:
-    addr = addr.strip()
+    addr = addr.strip()  # todo: 高速化のため外出し
     for name, reg in regexes:
         m = re.match(reg, addr)
         if m is not None:
@@ -131,25 +138,25 @@ def normalizePref(prefectures: Dict[str, Iterable[str]], addr: str) -> Tuple[Opt
 
 
 # 市区町村名
-def getCity(prefectures: Dict[str, Iterable[str]], pref: str, addr: str) -> Tuple[Optional[str], str]:
+def getCity(prefectures: Dict[str, Iterable[str]], pref: str, addr: str, option: Option) -> Tuple[Optional[str], str]:
     cities: Tuple[str, ...] = tuple(prefectures.get(pref, tuple()))
-    cityRegexes: Tuple[Tuple[str, str,]] = getCityRegexes(cities)
+    cityRegexes: Tuple[Tuple[str, str,]] = getCityRegexes(cities, option)
     return match_regexes(cityRegexes, addr)
 
 
-def normalizeTownName(addr: str, pref: str, city: str, config: Config) -> Tuple[Optional[str], str]:
-    townRegexes: Tuple[Tuple[str, str,]] = getTownRegexes(pref, city, config)
-    addr = addr.replace(r'^大字', '')
+def normalizeTownName(addr: str, pref: str, city: str, config: Config, option: Option) -> Tuple[Optional[str], str]:
+    townRegexes: Tuple[Tuple[str, str,]] = getTownRegexes(pref, city, config, option)
+    addr = re.sub('^大字', '', addr)
     return match_regexes(townRegexes, addr)
 
 
 # 都道府県名の推測
-def estimatePref(prefectures: Dict[str, Iterable[str]], addr: str, config: Config) -> Optional[str]:
+def estimatePref(prefectures: Dict[str, Iterable[str]], addr: str, config: Config, option: Option) -> str:
     # 都道府県名が省略されている
     matched: List = []
     for _pref in prefectures:
         cities = prefectures.get(_pref, None)
-        cityRegexes = getCityRegexes(cities)
+        cityRegexes = getCityRegexes(cities, option)
         addr = addr.strip()
         for _city, reg in cityRegexes:
             m = re.match(reg, addr)
@@ -160,7 +167,7 @@ def estimatePref(prefectures: Dict[str, Iterable[str]], addr: str, config: Confi
     if len(matched) == 1:
         return matched[0][PREF]
     for m in matched:
-        pref, addr = normalizeTownName(m[ADDRESS], m[PREF], m[CITY], config)
+        pref, addr = normalizeTownName(m[ADDRESS], m[PREF], m[CITY], config, option)
         if pref is not None:
             return pref
-    return None
+    return ''
