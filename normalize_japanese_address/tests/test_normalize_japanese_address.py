@@ -3,6 +3,7 @@
 from typing import Dict, List, Tuple
 
 from ..lib.const import ADDRESS, CITY, LEVEL, PREF, TOWN
+from ..lib.config import DEFAULT_OPTION
 from ..normalize import normalize
 
 
@@ -23,8 +24,11 @@ TEST_PATTERNS: List[Tuple[str, Dict[str, str]]] = [
         ('京都府京都市東山区大和大路2丁目五百三十七の1', {PREF: "京都府", CITY: "京都市東山区", TOWN: "大和大路二丁目", ADDRESS: "537-1", LEVEL: 3}),
         ('愛知県蒲郡市旭町17番1号', {PREF: "愛知県", CITY: "蒲郡市", TOWN: "旭町", ADDRESS: "17-1", LEVEL: 3}),
         ('北海道岩見沢市栗沢町万字寿町１−２', {PREF: "北海道", CITY: "岩見沢市", TOWN: "栗沢町万字寿町", ADDRESS: "1-2", LEVEL: 3}),
-        ('北海道久遠郡せたな町北檜山区北檜山１９３', {PREF: "北海道", CITY: "久遠郡せたな町", TOWN: "北檜山区北檜山", ADDRESS: "193", LEVEL: 3}),
-        ('北海道久遠郡せたな町北桧山区北桧山１９３', {PREF: "北海道", CITY: "久遠郡せたな町", TOWN: "北檜山区北檜山", ADDRESS: "193", LEVEL: 3}),
+        ('北海道久遠郡せたな町北檜山区北檜山１９３', {PREF: "北海道", CITY: "久遠郡せたな町",
+                                  TOWN: "北檜山区北檜山" if DEFAULT_OPTION.is_exact else '北桧山区北桧山', ADDRESS: "193",
+        LEVEL: 3}),
+        ('北海道久遠郡せたな町北桧山区北桧山１９３', {PREF: "北海道", CITY: "久遠郡せたな町",
+                                  TOWN: "北檜山区北檜山" if DEFAULT_OPTION.is_exact else '北桧山区北桧山', ADDRESS: "193", LEVEL: 3}),
         ('京都府京都市中京区錦小路通大宮東入七軒町466', {PREF: "京都府", CITY: "京都市中京区", TOWN: "七軒町", ADDRESS: "466", LEVEL: 3}),
         ('栃木県佐野市七軒町2201', {PREF: "栃木県", CITY: "佐野市", TOWN: "七軒町", ADDRESS: "2201", LEVEL: 3}),
         ('京都府京都市東山区大和大路通三条下る東入若松町393', {PREF: "京都府", CITY: "京都市東山区", TOWN: "若松町", ADDRESS: "393", LEVEL: 3}),
@@ -192,3 +196,4 @@ def test_normalize_japanese_address(patterns: List[Tuple[str, Dict[str, str]]] =
 
 if __name__ == '__main__':
     test_normalize_japanese_address()
+

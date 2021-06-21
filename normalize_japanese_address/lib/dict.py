@@ -3,6 +3,7 @@
 import re
 from typing import Callable, Final, List, Tuple, Union
 import unicodedata
+# from functools import lru_cache
 #
 from .zen2han import zen2han
 from .const import HYPHNES, NUMS_WO_MARU, NUMS_W_ZEN
@@ -35,6 +36,8 @@ JIS_NEW_KANJI: Final[List[str]] = \
     '涛,迩,蝿,桧,侭,薮,篭'.split(',')
 
 JIS_KANJI_REGEXES = [[f'{old}|{new}', old, new] for old, new in zip(JIS_OLD_KANJI, JIS_NEW_KANJI)]
+JIS_KANJI_MAP = str.maketrans({old: new for old, new in zip(JIS_OLD_KANJI, JIS_NEW_KANJI)})
+COMPILED_OLD_KANJIS = re.compile('|'.join(JIS_OLD_KANJI))
 
 # 以下なるべく文字数が多いものほど上にすること
 REGEX_CUSTOM_PATTERNS: List[Tuple[str, str]] = [
@@ -62,6 +65,7 @@ REGEX_CUSTOM_PATTERNS: List[Tuple[str, str]] = [
         ("エ|ヱ|え", '(エ|ヱ|え)'),
         ("曾|曽", '(曾|曽)'),
         ]
+COMPILED_REGEX_CUSTOM_PATTERNS = re.compile('|'.join([p for p, r in REGEX_CUSTOM_PATTERNS]))
 
 
 def rep(s: str, search_pattern: str, replacee: str, replacement: Union[str, Callable]) -> str:
@@ -72,7 +76,7 @@ def rep(s: str, search_pattern: str, replacee: str, replacement: Union[str, Call
         else:
             mm = re.search(replacee, m.group())
             for scan, new in mm.groups():
-                mx = []  # to revert
+                mx = []  # todo: to revert  #
         matches = mx+matches
     #
     t: str = s[:]
@@ -97,15 +101,22 @@ def preprocess(address: str):
     return addr
 
 
-def jisKanji(s: str) -> str:
-    for regex, old, new in JIS_KANJI_REGEXES:
-        s = s.replace(regex, f'({old}|{new})')
+def jisKanji(s: str, is_exact: bool) -> str:
+    if is_exact:
+        for regex, old, new in JIS_KANJI_REGEXES:
+            s = re.sub(regex, f'({old}|{new})', s)
+        return s
+    else:
+        # if re.match(COMPILED_OLD_KANJIS, s):   # 速度改善効果なし
+        return s.translate(JIS_KANJI_MAP)
+    # return s
+
+
+def toRegex(s: str, is_exact: bool):
+    if not is_exact:
+        precheck: bool = re.match(COMPILED_REGEX_CUSTOM_PATTERNS, s)
+    if is_exact or precheck:
+        for regex, p in REGEX_CUSTOM_PATTERNS:
+            s = rep(s, regex, regex, p)
+    s = jisKanji(s, is_exact)
     return s
-
-
-def toRegex(s: str):
-    for regex, p in REGEX_CUSTOM_PATTERNS:
-        s = rep(s, regex, regex, p)
-    s = jisKanji(s)
-    return s
-

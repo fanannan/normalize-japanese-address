@@ -32,17 +32,17 @@ def normalize(
     # 事前処理
     addr: str = preprocess(address)
     # 都道府県名の正規化
-    prefectures: Dict[str, Tuple[str, ...]] = getPrefectures(config)
+    prefectures: Dict[str, Tuple[str, ...]] = getPrefectures(config, option)
     pref, addr = normalizePref(prefectures, addr)
     # 省略された都道府県の補足
     if pref is None:
-        pref = estimatePref(prefectures, addr, config)
+        pref = estimatePref(prefectures, addr, config, option)
     # 市区町村名
     if pref and option.level >= 2:
-        city, addr = getCity(prefectures, pref, addr)
+        city, addr = getCity(prefectures, pref, addr, option)
     # 町丁目以降の正規化
     if city and option.level >= 3:
-        _town, _addr = normalizeTownName(addr, pref, city, config)
+        _town, _addr = normalizeTownName(addr, pref, city, config, option)
         if _town is not None:
             town = _town
             addr = _addr
