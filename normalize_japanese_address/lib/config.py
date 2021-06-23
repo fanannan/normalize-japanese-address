@@ -20,4 +20,8 @@ class Option():
 
 
 DEFAULT_CONFIG: Config = Config()
+<<<<<<< HEAD
 DEFAULT_OPTION: Option = Option(level=3, is_exact=True, use_api=False)
+=======
+DEFAULT_OPTION: Option = Option(level=3, is_exact=False, use_api=False)
+>>>>>>> 30b9d01828148fa35533ed6024f69f31cdb83546

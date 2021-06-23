@@ -66,12 +66,15 @@ REGEX_CUSTOM_PATTERNS: List[Tuple[str, str]] = [
         ("曾|曽", '(曾|曽)'),
         ]
 COMPILED_REGEX_CUSTOM_PATTERNS = re.compile('|'.join([p for p, r in REGEX_CUSTOM_PATTERNS]))
+<<<<<<< HEAD
 
 
 # 単純な住居表示変更
 SIMPLE_RENAMING_PATTERNS: Tuple[Tuple[str, str], ...] = (
         ('(筑紫郡)?那珂川町', '那珂川市'),
         ('(下都賀郡)?岩舟町', '栃木市岩舟町'),)
+=======
+>>>>>>> 30b9d01828148fa35533ed6024f69f31cdb83546
 
 
 def rep(s: str, search_pattern: str, replacee: str, replacement: Union[str, Callable]) -> str:
