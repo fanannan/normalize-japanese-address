@@ -146,8 +146,20 @@ def getCity(prefectures: Dict[str, Iterable[str]], pref: str, addr: str, option:
 
 def normalizeTownName(addr: str, pref: str, city: str, config: Config, option: Option) -> Tuple[Optional[str], str]:
     townRegexes: Tuple[Tuple[str, str,]] = getTownRegexes(pref, city, config, option)
-    addr = re.sub('^大字', '', addr)
-    return match_regexes(townRegexes, addr)
+    _addr = re.sub('^(大)?字', '', addr)
+    # 大字、字を外した状態で突き合わせ
+    normalized_town_name, remaining_addr = match_regexes(townRegexes, _addr)
+    if normalized_town_name is None and addr != _addr:
+        # 大字、字を外して見つからない場合は、もとに戻して突き合わせ
+        normalized_town_name, remaining_addr = match_regexes(townRegexes, addr)
+    if normalized_town_name is None:
+        # それでも見つからない場合は機械的に分解
+        # addrに分解しきれない未知の住所があるケースに対処
+        m = re.match('([^\d\s]+)[\s]*([\d].*)', remaining_addr)
+        if m:
+            normalized_town_name = normalized_town_name+m.groups()[0] if normalized_town_name else m.groups()[0]
+            remaining_addr = m.groups()[1]
+    return normalized_town_name, remaining_addr
 
 
 # 都道府県名の推測
