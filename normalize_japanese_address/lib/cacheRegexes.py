@@ -68,7 +68,7 @@ def getCityRegexes(cities: Iterable[str], option: Option) -> Tuple[Tuple[str, st
 
 
 @lru_cache(maxsize=None)
-def getTowns(pref: str, city: str, config: Config, option: Option) -> list[dict]:
+def getTowns(pref: str, city: str, config: Config, option: Option) -> List[Dict]:
     if option.use_api:
         encoded_pref: str = urllib.parse.quote(pref)
         encoded_city: str = urllib.parse.quote(city)
@@ -81,7 +81,7 @@ def getTowns(pref: str, city: str, config: Config, option: Option) -> list[dict]
         else:
             response = {}
             logger.info(f'{pref}{city}のデータファイルがありません({file_path})')
-    towns: list[dict] = response if option.is_exact else [jisKanji(r, is_exact=False) for r in response]
+    towns: List[Dict] = response if option.is_exact else [jisKanji(r, is_exact=False) for r in response]
     return towns
 
 
