@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import re
-from typing import Callable, Final, List, Tuple, Union
 import unicodedata
+from typing import Callable, Final, List, Tuple, Union
+
+from .const import HYPHNES, NUMS_WO_MARU, NUMS_W_ZEN
 # from functools import lru_cache
 #
 from .zen2han import zen2han
-from .const import HYPHNES, NUMS_WO_MARU, NUMS_W_ZEN
 
 # JIS 第2水準 => 第1水準 及び 旧字体 => 新字体
 JIS_OLD_KANJI: Final[List[str]] = \
@@ -40,6 +41,7 @@ JIS_KANJI_MAP = str.maketrans({old: new for old, new in zip(JIS_OLD_KANJI, JIS_N
 COMPILED_OLD_KANJIS = re.compile('|'.join(JIS_OLD_KANJI))
 
 # 以下なるべく文字数が多いものほど上にすること
+# todo: いかにも冗長なので完結にまとめたい
 REGEX_CUSTOM_PATTERNS: List[Tuple[str, str]] = [
         ("三栄町|四谷三栄町", '(三栄町|四谷三栄町)'),
         ("鬮野川|くじ野川|くじの川", '(鬮野川|くじ野川|くじの川)'),
@@ -64,7 +66,7 @@ REGEX_CUSTOM_PATTERNS: List[Tuple[str, str]] = [
         ("渕|淵", '(渕|淵)'),
         ("エ|ヱ|え", '(エ|ヱ|え)'),
         ("曾|曽", '(曾|曽)'),
-        ]
+]
 COMPILED_REGEX_CUSTOM_PATTERNS = re.compile('|'.join([p for p, r in REGEX_CUSTOM_PATTERNS]))
 
 # 単純な住居表示変更
@@ -73,7 +75,7 @@ SIMPLE_RENAMING_PATTERNS: Tuple[Tuple[str, str], ...] = (
         ('(丹波)?篠山市', '丹波篠山市'),
         ('(吾川郡)?伊野町', 'いの町'),
         # ('(下都賀郡)?岩舟町', '栃木市岩舟町'),
-        )
+)
 
 
 def rep(s: str, search_pattern: str, replacee: str, replacement: Union[str, Callable]) -> str:
@@ -85,11 +87,11 @@ def rep(s: str, search_pattern: str, replacee: str, replacement: Union[str, Call
             mm = re.search(replacee, m.group())
             for scan, new in mm.groups():
                 mx = []  # todo: to revert  #
-        matches = mx+matches
+        matches = mx + matches
     #
     t: str = s[:]
     for span, new in matches:
-        t = t[:span[0]]+new+t[span[1]:]
+        t = t[:span[0]] + new + t[span[1]:]
     return t
 
 
@@ -124,8 +126,9 @@ def jisKanji(s: str, is_exact: bool) -> str:
 
 
 def toRegex(s: str, is_exact: bool):
+    precheck: bool = False
     if not is_exact:
-        precheck: bool = re.match(COMPILED_REGEX_CUSTOM_PATTERNS, s)
+        precheck = re.match(COMPILED_REGEX_CUSTOM_PATTERNS, s) is not None
     if is_exact or precheck:
         for regex, p in REGEX_CUSTOM_PATTERNS:
             s = rep(s, regex, regex, p)

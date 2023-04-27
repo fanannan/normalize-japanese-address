@@ -1,6 +1,6 @@
 
 Geolonia様のオープンソースの住所正規化ライブラリ( https://github.com/geolonia/normalize-japanese-addresses )をPythonに移植したものです。
-現在まだ試作段階であり、Geolonia様のもとのライブラリと完全に同じ動作にはなっていません（テストのうち7.2%で失敗）。
+現在まだ試作段階であり、Geolonia様のもとのライブラリと完全に同じ動作にはなっていません（テストのうち7.1%で失敗）。
 また、仕様はすぐに変更する可能性があります。
 
 ## インストール方法
@@ -15,6 +15,7 @@ pip install --upgrade normalize_japanese_address
 ```
 
 ## 使い方
+
 ```python
 from normalize_japanese_address.normalize import normalize
 
@@ -32,6 +33,13 @@ print(result)
 * `1` - 都道府県まで判別できた。
 * `2` - 市区町村まで判別できた。
 * `3` - 町丁目まで判別できた。
+
+## ライブラリの名称
+- normalize-japanese-addressesではなく、normalize_japanese_address という名称になっています。ハイフンが安打バーになっているほか、addressが単数になっているのに深い意味はありません。
+
+
+## メンテナンス
+- https://github.com/geolonia/japanese-addresses/tree/develop/api が更新された場合、それに対応している japanese_address/api 以下を新しいものに差し替えれることで更新できます。
 
 ## ライセンス、利用規約
 - 本プログラムは、下記のプログラムをもとに開発されています。住所データのライセンスは CC BY 4.0、それ以外はMITとされており、本プログラムもそれに従います。

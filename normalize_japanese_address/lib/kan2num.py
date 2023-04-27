@@ -13,13 +13,13 @@ def read_kansuji(s: str) -> int:
         if pos < 0:
             block = 0
             pos = next_pos - 1
-        elif pos == next_pos: # '二千百'のように'千'と'百'の間に数字がない場合
+        elif pos == next_pos:  # '二千百'のように'千'と'百'の間に数字がない場合
             block = 1
         else:
             block = int(kan2num_simple(s[next_pos:pos]))  # 'next_posとposの間の漢数字を数値に変換
-        r += block*(10**(len(KETADORI) - i))
+        r += block * (10 ** (len(KETADORI) - i))
         next_pos = pos + 1
-    if next_pos != len(s): # 一の位の数字がある場合
+    if next_pos != len(s):  # 一の位の数字がある場合
         r += kan2num_simple(s[next_pos:len(s)])
     return r
 

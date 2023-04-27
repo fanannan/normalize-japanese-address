@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import os
 import re
 import urllib.parse
 from functools import lru_cache
-from typing import Dict, Iterable, List, Optional, Tuple
-import requests
-import orjson
-import os
 from logging import getLogger
-#
+from typing import Dict, Iterable, List, Optional, Tuple
+
+import orjson
+import requests
+
 from .config import Config, Option
-from .const import ADDRESS, CITY, PREF, KANSUJI_W_TEN, HYPHNES, BASE_JSON_FILE
-from .dict import toRegex, jisKanji
-#
+from .const import ADDRESS, BASE_JSON_FILE, CITY, HYPHNES, KANSUJI_W_TEN, PREF
+from .dict import jisKanji, toRegex
 from .kan2num import kan2num
 
 logger = getLogger(__name__)
@@ -26,7 +26,7 @@ def read_json(path: str):
 @lru_cache
 def getPrefectures(config: Config, option: Option) -> Dict[str, Tuple[str, ...]]:
     if option.use_api:
-        response = requests.get(config.japaneseAddressesApi+BASE_JSON_FILE).json()
+        response = requests.get(config.japaneseAddressesApi + BASE_JSON_FILE).json()
     else:
         response = read_json(os.path.join(config.api_data_path, BASE_JSON_FILE))
     d: Dict[str, List[str]] = response
@@ -68,7 +68,7 @@ def getCityRegexes(cities: Iterable[str], option: Option) -> Tuple[Tuple[str, st
 
 
 @lru_cache(maxsize=None)
-def getTowns(pref: str, city: str, config: Config, option: Option) -> List[str]:
+def getTowns(pref: str, city: str, config: Config, option: Option) -> list[dict]:
     if option.use_api:
         encoded_pref: str = urllib.parse.quote(pref)
         encoded_city: str = urllib.parse.quote(city)
@@ -81,16 +81,17 @@ def getTowns(pref: str, city: str, config: Config, option: Option) -> List[str]:
         else:
             response = {}
             logger.info(f'{pref}{city}のデータファイルがありません({file_path})')
-    towns: List[str] = response if option.is_exact else [jisKanji(r, is_exact=False) for r in response]
+    towns: list[dict] = response if option.is_exact else [jisKanji(r, is_exact=False) for r in response]
     return towns
 
 
 @lru_cache(maxsize=None)
 def getTownRegexes(pref: str, city: str, config: Config, option: Option) -> Tuple[Tuple[str, str,], ...]:
     # 少ない文字数の地名に対してミスマッチしないように文字の長さ順にソート
-    towns = getTowns(pref, city, config, option)
+    towns: list[dict] = getTowns(pref, city, config, option)
     towns = sorted(towns, key=lambda x: len(x), reverse=True)
-    return tuple([(town, toRegex(make_town_regex(city, town), option.is_exact)) for town in towns])
+    return tuple([(town.get('town', ''),
+                   toRegex(make_town_regex(city, town.get('town', '')), option.is_exact)) for town in towns])
 
 
 def make_town_regex(city: str, town: str) -> str:
@@ -157,7 +158,7 @@ def normalizeTownName(addr: str, pref: str, city: str, config: Config, option: O
         # addrに分解しきれない未知の住所があるケースに対処
         m = re.match('([^\d\s]+)[\s]*([\d].*)', remaining_addr)
         if m:
-            normalized_town_name = normalized_town_name+m.groups()[0] if normalized_town_name else m.groups()[0]
+            normalized_town_name = normalized_town_name + m.groups()[0] if normalized_town_name else m.groups()[0]
             remaining_addr = m.groups()[1]
     return normalized_town_name, remaining_addr
 

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import dataclasses
 import os
-#
+
 from .const import API_URL
 
 

@@ -3,14 +3,12 @@
 import re
 from typing import Dict, Optional, Tuple, Union
 
-
 from .lib.cacheRegexes import estimatePref, getCity, getPrefectures, normalizePref, normalizeTownName
 #
 from .lib.config import Config, DEFAULT_CONFIG, DEFAULT_OPTION, Option
-from .lib.const import ADDRESS, CITY, LEVEL, PREF, TOWN, HYPHNES, NUMS
+from .lib.const import ADDRESS, CITY, HYPHNES, LEVEL, NUMS, PREF, TOWN
 from .lib.dict import preprocess
 from .lib.kan2num import kan2num
-from .lib.num2kan import num2kanji
 from .lib.patch_addr import patch_address
 
 
@@ -60,7 +58,6 @@ def normalize(
     # addr = re.sub("([0-9]+)丁目", lambda m: num2kanji(int(m.groups()[0])), addr) #kan2numでもんだがあるので一時退避
     addr = re.sub("([0-9]+)丁目", lambda m: str(int(m.groups()[0])), addr)
 
-
     #   /(([0-9〇一二三四五六七八九十百千]+)(番地?)([0-9〇一二三四五六七八九十百千]+)号)\s*(.+)/, '$1 $5',
     #   /([0-9〇一二三四五六七八九十百千]+)(番地?)([0-9〇一二三四五六七八九十百千]+)号?/, '$1-$3',
     #   /([0-9〇一二三四五六七八九十百千]+)番地?/, '$1')
@@ -72,7 +69,6 @@ def normalize(
             (f'({NUMS}+)の', r'\1-'))
     for p, r in BANCHI_PATTERNS:
         addr = re.sub(p, r, addr)
-
 
     #   .replace(
     #     /([0-9〇一二三四五六七八九十百千]+)[-－﹣−‐⁃‑‒–—﹘―⎯⏤ーｰ─━]/g,
@@ -87,7 +83,7 @@ def normalize(
     #     },
     #   )
     f = lambda x: re.sub(HYPHNES, '-', x.group())
-    # f = lambda x: re.sub(HYPHNES, '-', kan2num(x.group()))  #kan2numでもんだがあるので一時退避
+    # f = lambda x: re.sub(HYPHNES, '-', kan2num(x.group()))  #kan2numで問題があるので一時退避
     # _ = addr
     for p in [f'({NUMS}+){HYPHNES}', f'{HYPHNES}({NUMS}+)']:
         addr = re.sub(p, f, addr)
@@ -95,7 +91,6 @@ def normalize(
         #     print(_, addr)
         #     print([ord(c) for c in _])
         #     print([ord(c) for c in addr])
-
 
     BANCHI_PATTERNS2 = (
             f'({NUMS}+)-',  # `1-` のようなケース
