@@ -1,7 +1,11 @@
 
+This is to standardize Japanese addresses by separating them into sets of prefecture, city, town, and additional details, based on Geolonia's TypeScript library (https://github.com/geolonia/normalize-japanese-addresses). 
+It is 
+currently still in the early stage and does not behave exactly the same as Geolonia's original library (fails 
+in 7.1% of tests). 
+
 Geolonia様のオープンソースの住所正規化ライブラリ( https://github.com/geolonia/normalize-japanese-addresses )をPythonに移植したものです。
 現在まだ試作段階であり、Geolonia様のもとのライブラリと完全に同じ動作にはなっていません（テストのうち7.1%で失敗）。
-また、仕様はすぐに変更する可能性があります。
 
 ## インストール方法
 
