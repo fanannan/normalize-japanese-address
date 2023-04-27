@@ -36,3 +36,4 @@ __pypackages__/
 /poetry.lock
 /.vscode/
 /.idea/
+/.venv/

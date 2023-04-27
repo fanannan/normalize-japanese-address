@@ -39,7 +39,7 @@ print(result)
 * `3` - 町丁目まで判別できた。
 
 ## ライブラリの名称
-- normalize-japanese-addressesではなく、normalize_japanese_address という名称になっています。ハイフンが安打バーになっているほか、addressが単数になっているのに深い意味はありません。
+- normalize-japanese-addressesではなく、normalize_japanese_address という名称になっています。ハイフンがアンダーバーになっているほか、addressが単数になっているのに深い意味はありません。
 
 
 ## メンテナンス
