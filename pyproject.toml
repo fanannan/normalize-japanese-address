@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "normalize_japanese_address"
-version = "0.0.11"
+version = "0.0.12"
 authors = ["SAWADA takahiro <saw@computer.org>"]
 description = "To standardize Japanese addresses by separating them into sets of prefecture, city, town, and additional details"
 license = "MIT"
@@ -9,7 +9,7 @@ repository = "https://github.com/fanannan/normalize-japanese-address"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.8"
 kanjize = "^1.0.0"
 mojimoji = "^0.0.12"
 requests = "^2.25.1"
