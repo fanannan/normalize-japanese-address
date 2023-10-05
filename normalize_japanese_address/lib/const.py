@@ -10,6 +10,9 @@ ADDRESS: Final[str] = 'address'
 #
 LEVEL: Final[str] = 'level'
 #
+LONG: Final[str] = 'long'
+LAT: Final[str] = 'lat'
+#
 PATTERN: Final[str] = "pattern"
 RESULT: Final[str] = "result"
 #

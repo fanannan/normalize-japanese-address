@@ -36,7 +36,7 @@ def getPrefectures(config: Config, option: Option) -> Dict[str, Tuple[str, ...]]
 
 
 @lru_cache
-def getPrefectureRegexes(prefs: Iterable[str]) -> Tuple[Tuple[str, str,]]:
+def getPrefectureRegexes(prefs: Iterable[str]) -> Tuple[Tuple[str, str, float, float]]:
     # `東京` の様に末尾の `都府県` が抜けた住所に対応
     def make_regex(p: str):
         q = re.sub('(都|道|府|県)$', '', p)
@@ -48,11 +48,12 @@ def getPrefectureRegexes(prefs: Iterable[str]) -> Tuple[Tuple[str, str,]]:
             return f'{q}府?'
         return f'{q}県?'
 
-    return tuple([(pref, make_regex(pref)) for pref in prefs])
+    return tuple([(pref, make_regex(pref), 0.0, 0.0)
+                  for pref in prefs])
 
 
 @lru_cache(maxsize=None)
-def getCityRegexes(cities: Iterable[str], option: Option) -> Tuple[Tuple[str, str,], ...]:
+def getCityRegexes(cities: Iterable[str], option: Option) -> Tuple[Tuple[str, str, float, float], ...]:
     # 郡が省略された住所に対応
     def make_regex(p: str) -> str:
         m = re.search('(町|村)$', p)
@@ -64,7 +65,8 @@ def getCityRegexes(cities: Iterable[str], option: Option) -> Tuple[Tuple[str, st
 
     # 少ない文字数の地名に対してミスマッチしないように文字の長さ順にソート
     cities = sorted(cities, key=lambda x: len(x), reverse=True)
-    return tuple([(city, toRegex(make_regex(city), option.is_exact)) for city in cities])
+    return tuple([(city, toRegex(make_regex(city), option.is_exact), 0.0, 0.0)
+                  for city in cities])
 
 
 @lru_cache(maxsize=None)
@@ -86,12 +88,16 @@ def getTowns(pref: str, city: str, config: Config, option: Option) -> List[Dict]
 
 
 @lru_cache(maxsize=None)
-def getTownRegexes(pref: str, city: str, config: Config, option: Option) -> Tuple[Tuple[str, str,], ...]:
+def getTownRegexes(
+        pref: str, city: str,
+        config: Config, option: Option) -> Tuple[Tuple[str, str, float, float], ...]:
     # 少ない文字数の地名に対してミスマッチしないように文字の長さ順にソート
     towns: list[dict] = getTowns(pref, city, config, option)
     towns = sorted(towns, key=lambda x: len(x), reverse=True)
     return tuple([(town.get('town', ''),
-                   toRegex(make_town_regex(city, town.get('town', '')), option.is_exact)) for town in towns])
+                   toRegex(make_town_regex(city, town.get('town', '')), option.is_exact),
+                   town.get('lat', 0.0), town.get('lng', 0.0))
+                  for town in towns])
 
 
 def make_town_regex(city: str, town: str) -> str:
@@ -122,37 +128,44 @@ def make_regexes(m: re.Match):
 
 
 # 地名照合
-def match_regexes(regexes: Iterable[Tuple[str, str,]], addr: str) -> Tuple[Optional[str], str]:
+def match_regexes(
+        regexes: Iterable[Tuple[str, str, float, float]],
+        addr: str) -> Tuple[Optional[str], str, float, float]:
     addr = addr.strip()  # todo: 高速化のため外出し
-    for name, reg in regexes:
+    for name, reg, lat, lng in regexes:
         m = re.match(reg, addr)
         if m is not None:
-            return name, addr[len(m.group()):]
-    return None, addr
+            return name, addr[len(m.group()):], lat, lng
+    return None, addr, 0.0, 0.0
 
 
 # 都道府県名の正規化
 def normalizePref(prefectures: Dict[str, Iterable[str]], addr: str) -> Tuple[Optional[str], str]:
     prefs: Tuple[str, ...] = tuple(prefectures.keys())
-    prefRegexes: Tuple[Tuple[str, str,]] = getPrefectureRegexes(prefs)
-    return match_regexes(prefRegexes, addr)
+    prefRegexes: Tuple[Tuple[str, str, float, float]] = getPrefectureRegexes(prefs)
+    return match_regexes(prefRegexes, addr)[:2]
 
 
 # 市区町村名
 def getCity(prefectures: Dict[str, Iterable[str]], pref: str, addr: str, option: Option) -> Tuple[Optional[str], str]:
     cities: Tuple[str, ...] = tuple(prefectures.get(pref, tuple()))
-    cityRegexes: Tuple[Tuple[str, str,]] = getCityRegexes(cities, option)
-    return match_regexes(cityRegexes, addr)
+    cityRegexes: Tuple[Tuple[str, str, float, float]] = getCityRegexes(cities, option)
+    return match_regexes(cityRegexes, addr)[:2]
 
 
-def normalizeTownName(addr: str, pref: str, city: str, config: Config, option: Option) -> Tuple[Optional[str], str]:
-    townRegexes: Tuple[Tuple[str, str,]] = getTownRegexes(pref, city, config, option)
+def normalizeTownName(
+        addr: str,
+        pref: str,
+        city: str,
+        config: Config,
+        option: Option) -> Tuple[Optional[str], str, float, float]:
+    townRegexes: Tuple[Tuple[str, str, float, float], ...] = getTownRegexes(pref, city, config, option)
     _addr = re.sub('^(大)?字', '', addr)
     # 大字、字を外した状態で突き合わせ
-    normalized_town_name, remaining_addr = match_regexes(townRegexes, _addr)
+    normalized_town_name, remaining_addr, lat, lng = match_regexes(townRegexes, _addr)
     if normalized_town_name is None and addr != _addr:
         # 大字、字を外して見つからない場合は、もとに戻して突き合わせ
-        normalized_town_name, remaining_addr = match_regexes(townRegexes, addr)
+        normalized_town_name, remaining_addr, lat, lng = match_regexes(townRegexes, addr)
     if normalized_town_name is None:
         # それでも見つからない場合は機械的に分解
         # addrに分解しきれない未知の住所があるケースに対処
@@ -160,7 +173,8 @@ def normalizeTownName(addr: str, pref: str, city: str, config: Config, option: O
         if m:
             normalized_town_name = normalized_town_name + m.groups()[0] if normalized_town_name else m.groups()[0]
             remaining_addr = m.groups()[1]
-    return normalized_town_name, remaining_addr
+            lat, lng = 0.0, 0.0
+    return normalized_town_name, remaining_addr, lat, lng
 
 
 # 都道府県名の推測
@@ -171,7 +185,7 @@ def estimatePref(prefectures: Dict[str, Iterable[str]], addr: str, config: Confi
         cities = prefectures.get(_pref, None)
         cityRegexes = getCityRegexes(cities, option)
         addr = addr.strip()
-        for _city, reg in cityRegexes:
+        for _city, reg, _lat, _lng in cityRegexes:
             m = re.match(reg, addr)
             if m is not None:
                 matched.append({PREF: _pref, CITY: _city, ADDRESS: addr[len(m.group()):], })
@@ -180,7 +194,7 @@ def estimatePref(prefectures: Dict[str, Iterable[str]], addr: str, config: Confi
     if len(matched) == 1:
         return matched[0][PREF]
     for m in matched:
-        pref, addr = normalizeTownName(m[ADDRESS], m[PREF], m[CITY], config, option)
+        pref, addr, _lat, _lng = normalizeTownName(m[ADDRESS], m[PREF], m[CITY], config, option)
         if pref is not None:
             return pref
     return ''

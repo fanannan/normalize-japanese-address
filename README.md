@@ -29,7 +29,7 @@ print(result)
 
 とすると、resultに
 ```python
-{'pref': '大阪府', 'city': '堺市北区', 'town': '新金岡町四丁', 'address': '1-8', 'level': 3}
+{'pref': '大阪府', 'city': '堺市北区', 'town': '新金岡町四丁', 'address': '1-8', 'level': 3, 'lat': 34.568184,  'long': 135.519409}
 ```
 を返します。levelは、住所文字列のどこまでを判別できたかを以下の数値で示しています。
 

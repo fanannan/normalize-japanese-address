@@ -6,7 +6,7 @@ from typing import Dict, Optional, Tuple, Union
 from .lib.cacheRegexes import estimatePref, getCity, getPrefectures, normalizePref, normalizeTownName
 #
 from .lib.config import Config, DEFAULT_CONFIG, DEFAULT_OPTION, Option
-from .lib.const import ADDRESS, CITY, HYPHNES, LEVEL, NUMS, PREF, TOWN
+from .lib.const import ADDRESS, CITY, HYPHNES, LEVEL, NUMS, PREF, TOWN, LAT, LONG
 from .lib.dict import preprocess
 from .lib.kan2num import kan2num
 from .lib.patch_addr import patch_address
@@ -26,6 +26,8 @@ def normalize(
     city: Optional[str] = None
     town: Optional[str] = None
     level: int = 0
+    lat: float = 0.0
+    lng: float = 0.0
 
     # 事前処理
     addr: str = preprocess(address)
@@ -40,7 +42,7 @@ def normalize(
         city, addr = getCity(prefectures, pref, addr, option)
     # 町丁目以降の正規化
     if city and option.level >= 3:
-        _town, _addr = normalizeTownName(addr, pref, city, config, option)
+        _town, _addr, lat, lng = normalizeTownName(addr, pref, city, config, option)
         if _town is not None:
             town = _town
             addr = _addr
@@ -110,4 +112,7 @@ def normalize(
     for k in [pref, city, town]:
         if k:
             level += 1
-    return {PREF: pref, CITY: city, TOWN: town, ADDRESS: addr, LEVEL: level}
+
+    return {PREF: pref, CITY: city, TOWN: town, ADDRESS: addr,
+            LEVEL: level,
+            LAT: lat, LONG: lng, }
